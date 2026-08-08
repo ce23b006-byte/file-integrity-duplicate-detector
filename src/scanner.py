@@ -17,11 +17,14 @@ def scan_directory(directory):
         raise NotADirectoryError(
             f"Not a directory: {directory}"
         )
+    excluded_directories = { ".git", ".pytest_cache", "__pycache__", ".venv", "venv", "env", "reports", }
 
     files = []
 
     for path in directory.rglob("*"):
         if path.is_file():
+            if any(part in excluded_directories for part in path.parts): 
+                continue
             files.append(path)
 
     return files
