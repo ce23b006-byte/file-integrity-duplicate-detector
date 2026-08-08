@@ -1,54 +1,38 @@
-# File Integrity & Duplicate Detection System
+# File Integrity & Duplicate Detector
 
-A Python-based command-line tool that recursively scans directories and detects duplicate files using SHA-256 hashing.
+A Python-based command-line tool that scans directories, detects duplicate files using file size and SHA-256 hashing, and generates a detailed JSON report.
 
-## Features
+The project is designed to be **memory-efficient, modular, testable, and easy to extend**.
 
-- Recursive directory scanning
-- SHA-256 file hashing
-- File-size based pre-filtering
-- Duplicate file detection
-- Chunk-based file processing
-- JSON report generation
-- Command-line interface
-- Exception handling
-- Automated unit testing
+---
 
-## How It Works
+## 🚀 Features
 
-The application uses a multi-stage approach:
+* 🔍 Recursively scans directories for files
+* 📁 Supports nested folders
+* ⚡ Uses file size as a fast pre-filter
+* 🔐 Uses SHA-256 hashing for content verification
+* 💾 Hashes files in chunks to reduce memory usage
+* 🧩 Groups files with identical content
+* 📊 Calculates duplicate files and wasted storage
+* 📄 Generates JSON reports
+* ⚠️ Handles invalid directory paths gracefully
+* 🧪 Includes automated unit tests
+* 🧱 Modular project structure for easy extension
 
-```text
-Directory
-    |
-    v
-Scan all files
-    |
-    v
-Group files by size
-    |
-    v
-Hash files with matching sizes
-    |
-    v
-Compare SHA-256 hashes
-    |
-    v
-Group duplicate files
-    |
-    v
-Generate JSON report
-```
+---
 
-## Why File Size Is Checked First
+## 🛠️ Tech Stack
 
-Two files with different sizes cannot be identical.
+* **Language:** Python 3
+* **Hashing:** SHA-256
+* **Testing:** pytest
+* **Version Control:** Git
+* **Repository:** GitHub
 
-Therefore, the application first groups files by size and only calculates SHA-256 hashes for files that have the same size.
+---
 
-This reduces unnecessary file reading and hashing.
-
-## Project Structure
+## 📂 Project Structure
 
 ```text
 file-integrity-duplicate-detector/
@@ -63,142 +47,444 @@ file-integrity-duplicate-detector/
 │   ├── test_hasher.py
 │   └── test_duplicate_finder.py
 │
-├── reports/
-│
 ├── test_files/
 │   ├── file1.txt
-│   └── file2.txt
+│   ├── file2.txt
+│   └── ...
 │
 ├── main.py
-├── README.md
 ├── requirements.txt
+├── README.md
 └── .gitignore
 ```
 
-## Technologies
+---
 
-- Python
-- hashlib
-- pathlib
-- argparse
-- JSON
-- pytest
-- Git
-- GitHub
+## ⚙️ How It Works
 
-## Installation
+The duplicate detection process uses multiple stages to avoid unnecessary hashing.
 
-Clone the repository:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/file-integrity-duplicate-detector.git
+```text
+                Directory
+                    │
+                    ▼
+             Recursive Scan
+                    │
+                    ▼
+              Find Files
+                    │
+                    ▼
+             Group by Size
+                    │
+          ┌─────────┴─────────┐
+          │                   │
+     Unique Size        Same Size
+          │                   │
+       Ignore                 ▼
+                         SHA-256 Hash
+                              │
+                              ▼
+                    Group Matching Hashes
+                              │
+                              ▼
+                     Duplicate Groups
+                              │
+                              ▼
+                         JSON Report
 ```
 
-Navigate to the project:
+### Why group by file size first?
+
+Two files with different sizes cannot contain exactly the same data.
+
+Therefore, the program first groups files by their size and only hashes files that have the same size as another file.
+
+This reduces unnecessary hashing operations, especially when scanning directories containing many unique files.
+
+---
+
+## 🔐 SHA-256 File Hashing
+
+Files are hashed using SHA-256.
+
+Instead of loading an entire file into memory, the program reads the file in chunks.
+
+```python
+with open(file_path, "rb") as file:
+    while chunk := file.read(1024 * 1024):
+        sha256.update(chunk)
+```
+
+The current implementation uses a **1 MB chunk size**.
+
+This allows the program to process large files without allocating memory proportional to the entire file size.
+
+---
+
+## 📊 Duplicate Detection
+
+Two files are considered duplicates when:
+
+```text
+File A size == File B size
+             AND
+File A SHA-256 == File B SHA-256
+```
+
+For example:
+
+```text
+documents/
+├── report.pdf
+├── backup/
+│   └── report.pdf
+└── old/
+    └── report.pdf
+```
+
+If all three files have the same size and SHA-256 hash, they are placed in the same duplicate group.
+
+---
+
+## 💾 Wasted Storage Calculation
+
+For every duplicate group, the program calculates the storage occupied by redundant copies.
+
+For `N` identical files of size `S`:
+
+```text
+Wasted Storage = S × (N - 1)
+```
+
+For example:
+
+```text
+File size:       100 MB
+Copies:          4
+
+Wasted storage = 100 × (4 - 1)
+               = 300 MB
+```
+
+The first copy can be retained while the remaining copies represent potentially recoverable storage.
+
+---
+
+## 📄 JSON Report
+
+The program can generate a JSON report containing duplicate information.
+
+Example:
+
+```json
+{
+    "duplicate_groups": [
+        {
+            "hash": "example_sha256_hash",
+            "size": 1024,
+            "files": [
+                "folder1/file.txt",
+                "folder2/file.txt"
+            ]
+        }
+    ]
+}
+```
+
+The report can be used for further analysis or integrated into another application.
+
+---
+
+# 💻 Installation
+
+## 1. Clone the repository
+
+```bash
+git clone https://github.com/ce23b006-byte/file-integrity-duplicate-detector.git
+```
+
+## 2. Enter the project directory
 
 ```bash
 cd file-integrity-duplicate-detector
 ```
 
-Install the dependencies:
+## 3. Create a virtual environment
+
+### Windows
 
 ```bash
-py -m pip install -r requirements.txt
+python -m venv venv
+venv\Scripts\activate
 ```
 
-## Usage
-
-Run the application by providing a directory:
+### Linux / macOS
 
 ```bash
-py main.py <directory>
+python3 -m venv venv
+source venv/bin/activate
+```
+
+## 4. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# ▶️ Usage
+
+## Scan a directory
+
+```bash
+python main.py <directory>
 ```
 
 Example:
 
 ```bash
-py main.py test_files
+python main.py ./test_files
 ```
 
-You can also specify a custom report location:
+---
+
+## Generate a JSON report
 
 ```bash
-py main.py test_files --report reports/my_report.json
+python main.py <directory> --report report.json
 ```
+
+Example:
+
+```bash
+python main.py ./test_files --report report.json
+```
+
+---
 
 ## Example Output
 
 ```text
-File Integrity & Duplicate Detection System
-==================================================
-Scanning: test_files
-Files found: 2
-Duplicate groups found: 1
+Scanning directory: ./test_files
 
-Duplicate files:
+Files found: 10
+Duplicate groups found: 2
 
-SHA-256: 40312749b611791d45e8dc3fb4627b0d3ba1daf5204ffb0d384398aac0174584
-  └── test_files\file1.txt
-  └── test_files\file2.txt
+Duplicate Group 1
+-----------------
+Size: 1024 bytes
+Files:
+  test_files/file1.txt
+  test_files/file2.txt
 
-Report saved to: reports\report.json
+Duplicate Group 2
+-----------------
+Size: 2048 bytes
+Files:
+  test_files/data1.bin
+  test_files/data2.bin
+
+Report saved to: report.json
 ```
 
-## Testing
+> The exact output depends on the files present in the scanned directory.
 
-Run the automated tests:
+---
+
+# 🧪 Running Tests
+
+The project uses `pytest`.
+
+Run:
 
 ```bash
-py -m pytest
+pytest
 ```
 
-Current test result:
+For more detailed output:
+
+```bash
+pytest -v
+```
+
+The test suite currently covers core hashing and duplicate-detection behavior.
+
+---
+
+# 🧪 Test Cases
+
+Current tests include:
+
+* Identical files produce the same hash
+* Different files produce different hashes
+* Identical files are detected as duplicates
+* Different files are not incorrectly classified as duplicates
+
+Additional edge-case testing is planned as the project evolves.
+
+---
+
+# ⚡ Performance Considerations
+
+The duplicate detection process avoids hashing every file unnecessarily.
+
+### Without size filtering
 
 ```text
-4 passed
+Every file
+    ↓
+SHA-256
+    ↓
+Compare hashes
 ```
 
-The test suite verifies:
+### Current approach
 
-- Identical files produce the same SHA-256 hash
-- Different files produce different hashes
-- Duplicate files are detected
-- Different files are not incorrectly classified as duplicates
+```text
+Every file
+    ↓
+Check file size
+    ↓
+Files with unique sizes → ignored
+    ↓
+Potential candidates
+    ↓
+SHA-256
+    ↓
+Compare hashes
+```
 
-## Design Considerations
+This reduces the number of expensive hashing operations when a directory contains many files with unique sizes.
 
-### Memory Efficiency
+---
 
-Files are processed in chunks instead of loading the entire file into memory.
+# 🧠 Complexity
 
-This allows the application to process large files more efficiently.
+Let:
 
-### Duplicate Detection
+* `N` = number of files
+* `B` = total number of bytes processed during hashing
 
-Files are considered duplicates when they have the same file size and SHA-256 hash.
+### Directory scanning
 
-### Error Handling
+Approximately:
 
-The application handles common filesystem errors such as:
+```text
+O(N)
+```
 
-- Missing directories
-- Invalid directory paths
-- Permission errors
-- File access errors
+### Hashing
 
-## Future Improvements
+Hashing is proportional to the amount of file data processed:
 
-- Multithreaded hashing
-- SQLite scan history
-- GUI dashboard
-- Progress bar
-- Safe duplicate-file deletion
-- CSV reports
-- File integrity monitoring
-- Performance benchmarking
+```text
+O(B)
+```
 
-## Author
+### Duplicate grouping
 
-Your Name
+Hash-based grouping is approximately:
 
-GitHub: https://github.com/YOUR_USERNAME
+```text
+O(N)
+```
+
+Overall performance is dominated by filesystem access and the amount of data that must be hashed.
+
+---
+
+# 🛡️ Error Handling
+
+The application handles invalid input paths and avoids treating invalid directories as valid scan targets.
+
+Potential filesystem errors are handled so that the application can provide meaningful feedback rather than failing silently.
+
+---
+
+# 🔮 Future Improvements
+
+Planned improvements include:
+
+* [ ] Integrity verification against a saved baseline
+* [ ] Detection of modified, added, and deleted files
+* [ ] Multiple hashing algorithms
+* [ ] Partial hashing for faster duplicate detection
+* [ ] Parallel file hashing
+* [ ] Improved filesystem error handling
+* [ ] Symbolic-link handling
+* [ ] Expanded test coverage
+* [ ] Code coverage reporting
+* [ ] Type checking
+* [ ] Structured logging
+* [ ] GitHub Actions CI
+* [ ] Performance benchmarks
+* [ ] Interactive terminal interface
+* [ ] Optional web dashboard
+* [ ] Safe duplicate cleanup with dry-run mode
+
+---
+
+# 📌 Use Cases
+
+This tool can be useful for:
+
+* Finding duplicate documents
+* Cleaning redundant backups
+* Detecting repeated media files
+* Identifying redundant datasets
+* Auditing large directories
+* Reducing unnecessary storage usage
+* Building a foundation for file-integrity monitoring systems
+
+---
+
+# 🎯 Learning Objectives
+
+This project demonstrates practical knowledge of:
+
+* Python file handling
+* Recursive filesystem traversal
+* Hash functions
+* SHA-256
+* Memory-efficient file processing
+* Algorithmic optimization
+* Data structures
+* Exception handling
+* Command-line interfaces
+* JSON serialization
+* Unit testing
+* Git and GitHub
+* Modular software design
+
+---
+
+# 👨‍💻 Author
+
+**Rahul Dasari**
+
+GitHub:
+
+https://github.com/ce23b006-byte
+
+Project:
+
+https://github.com/ce23b006-byte/file-integrity-duplicate-detector
+
+---
+
+# 📄 License
+
+This project is currently available for educational and portfolio purposes.
+
+A formal open-source license can be added in a future release.
+
+---
+
+## ⭐ Project Status
+
+**Current Status:** Functional
+
+The core duplicate-detection pipeline is implemented and tested.
+
+Future versions will focus on performance optimization, stronger filesystem error handling, integrity monitoring, expanded automated testing, and CI/CD.
