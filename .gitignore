@@ -1,9 +1,23 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 .pytest_cache/
+
+# Virtual environments
 .venv/
 venv/
+env/
+
+# Environment files
 .env
+
+# IDE files
 .vscode/
 .idea/
-reports/*.json
+
+# Benchmark generated data
+benchmark_data/
+benchmark_duplicates/
+
+# Generated reports
+reports/
